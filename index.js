@@ -44,7 +44,7 @@ canvas.addEventListener("mousemove", event => {
     const canvasLeft = (event.clientX - boundingRect.left);
     const canvasTop = (event.clientY - boundingRect.top);
     //- console.log(canvasLeft, canvasTop);
-    universe.move_mouse(event.x, event.y);
+    universe.move_mouse(event.offsetX, event.offsetY);
     clearBG();
     drawDots();
 });
