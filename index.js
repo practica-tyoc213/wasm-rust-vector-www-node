@@ -21,11 +21,10 @@ canvas.height = (CELL_SIZE + 1) * height + 1;
 canvas.width = (CELL_SIZE + 1) * width + 1;
 
 
+universe.load();
+console.log("Loaded...");
 const renderLoop = () => {
   universe.tick();
-
-  clearBG();
-  drawDots();
 
   requestAnimationFrame(renderLoop);
 };
@@ -34,7 +33,7 @@ const toCanvas = (event) => {
     const boundingRect = canvas.getBoundingClientRect();
     const canvasLeft = (event.clientX - boundingRect.left);
     const canvasTop = (event.clientY - boundingRect.top);
-    return (canvasLeft, canvasTop);
+    return {canvasLeft, canvasTop};
 }
 
 canvas.addEventListener("mousemove", event => {
@@ -45,18 +44,18 @@ canvas.addEventListener("mousemove", event => {
     const canvasTop = (event.clientY - boundingRect.top);
     //- console.log(canvasLeft, canvasTop);
     universe.move_mouse(event.offsetX, event.offsetY);
-    clearBG();
-    drawDots();
+    //clearBG();
+    //drawDots();
 });
 
 canvas.addEventListener("mousedown", event => {
-    let x, y = toCanvas(event);
-    universe.set_mouse_down(x, y);
+    let {canvasLeft, canvasTop} = toCanvas(event);
+    universe.set_mouse_down(canvasLeft, canvasTop);
 });
 
 
 canvas.addEventListener("mouseup", event => {
-    universe.set_mouse_up(event.x, event.y);
+    universe.set_mouse_up(event.offsetX, event.offsetY);
 });
 
 
@@ -71,6 +70,7 @@ const clearBG = ()  => {
 }
 
 const drawDots = () => {
+    // NOTE: draw dots has moved to `lib.rs`
     const cellsPtr = universe.dots();
     //- console.log("cellsPtr", cellsPtr)
     const cellsCount = universe.dot_count();
@@ -101,3 +101,33 @@ const drawDots = () => {
     }
     ctx.stroke();
 };
+
+// This is not called from rust!!!
+export function reaload_universe_with(x) {
+    console.log("reaload_universe_with called!");
+    console.log(x);
+}
+
+
+async function initialize_world(url = '', data = {}) {
+    // Default options are marked with *
+    const response = await fetch(url, {
+      method: 'GET', // *GET, POST, PUT, DELETE, etc.
+    //   mode: 'cors', // no-cors, *cors, same-origin
+      cache: 'no-cache', // *default, no-cache, reload, force-cache, only-if-cached
+    //   credentials: 'same-origin', // include, *same-origin, omit
+      headers: {
+        'Content-Type': 'application/json'
+        // 'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      redirect: 'follow', // manual, *follow, error
+      referrerPolicy: 'no-referrer', // no-referrer, *no-referrer-when-downgrade, origin, origin-when-cross-origin, same-origin, strict-origin, strict-origin-when-cross-origin, unsafe-url
+    //   body: JSON.stringify(data) // body data type must match "Content-Type" header
+    });
+    return response.json(); // parses JSON response into native JavaScript objects
+  }
+  
+initialize_world('http://localhost:8000/users/1', { answer: 42 })
+    .then(data => {
+      universe.set_dots_now(JSON.stringify(data.vectors));
+    });
